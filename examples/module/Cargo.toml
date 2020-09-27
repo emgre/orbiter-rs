@@ -1,0 +1,11 @@
+[package]
+name = "example-module"
+version = "0.1.0"
+authors = ["Émile Grégoire <eg@emilegregoire.ca>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+orbiter = { version = "0.1", path = "../../orbiter" }

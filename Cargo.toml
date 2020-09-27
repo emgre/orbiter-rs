@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "orbiter",
+    "examples/module",
+]

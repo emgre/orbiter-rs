@@ -1,0 +1,7 @@
+[build]
+target = "i686-pc-windows-msvc"
+
+rustflags = [
+    "-Ctarget-feature=+crt-static", # Static CRT
+    "-Clink-args=/NODEFAULTLIB:msvcrt.lib" # Avoid conflicts generated in OrbiterSDK
+]
