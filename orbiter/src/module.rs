@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use std::os::raw::{c_void, c_int, c_char};
-use crate::{InstanceHandle, Object};
+use crate::{InstanceHandle, Vessel};
 use crate::{HINSTANCE, OBJHANDLE};
 
 #[repr(C)]
@@ -50,7 +50,7 @@ extern "C" fn clbkTimeJump(ctx: *mut c_void, simt: f64, simdt: f64, mjd: f64) {
 
 extern "C" fn clbkFocusChanged(ctx: *mut c_void, new_focus: OBJHANDLE , old_focus: OBJHANDLE) {
     let ctx = unsafe { &mut *(ctx as *mut ModuleAdapter) };
-    ctx.callbacks.on_focus_changed(&ctx.module, Object::from(new_focus).unwrap(), Object::from(old_focus));
+    ctx.callbacks.on_focus_changed(&ctx.module, Vessel::from_obj(new_focus).unwrap(), Vessel::from_obj(old_focus));
 }
 
 extern "C" fn clbkTimeAccChanged(ctx: *mut c_void, new_warp: f64, old_warp: f64) {
@@ -60,17 +60,17 @@ extern "C" fn clbkTimeAccChanged(ctx: *mut c_void, new_warp: f64, old_warp: f64)
 
 extern "C" fn clbkNewVessel(ctx: *mut c_void, vessel: OBJHANDLE) {
     let ctx = unsafe { &mut *(ctx as *mut ModuleAdapter) };
-    ctx.callbacks.on_new_vessel(&ctx.module, Object::from(vessel).unwrap());
+    ctx.callbacks.on_new_vessel(&ctx.module, Vessel::from_obj(vessel).unwrap());
 }
 
 extern "C" fn clbkDeleteVessel(ctx: *mut c_void, vessel: OBJHANDLE) {
     let ctx = unsafe { &mut *(ctx as *mut ModuleAdapter) };
-    ctx.callbacks.on_delete_vessel(&ctx.module, Object::from(vessel).unwrap());
+    ctx.callbacks.on_delete_vessel(&ctx.module, Vessel::from_obj(vessel).unwrap());
 }
 
 extern "C" fn clbkVesselJump(ctx: *mut c_void, vessel: OBJHANDLE) {
     let ctx = unsafe { &mut *(ctx as *mut ModuleAdapter) };
-    ctx.callbacks.on_vessel_jump(&ctx.module, Object::from(vessel).unwrap());
+    ctx.callbacks.on_vessel_jump(&ctx.module, Vessel::from_obj(vessel).unwrap());
 }
 
 extern "C" fn clbkPause(ctx: *mut c_void, pause: bool) {
@@ -146,11 +146,11 @@ pub trait ModuleCallbacks {
     fn on_pre_step(&mut self, _module: &Module, _simt: f64, _simdt: f64, _mjd: f64) {}
     fn on_post_step(&mut self, _module: &Module, _simt: f64, _simdt: f64, _mjd: f64) {}
     fn on_time_jump(&mut self, _module: &Module, _simt: f64, _simdt: f64, _mjd: f64) {}
-    fn on_focus_changed(&mut self, _module: &Module, _new_focus: Object, _old_focus: Option<Object>) {}
+    fn on_focus_changed(&mut self, _module: &Module, _new_focus: Vessel, _old_focus: Option<Vessel>) {}
     fn on_time_acc_changed(&mut self, _module: &Module, _new_warp: f64, _old_warp: f64) {}
-    fn on_new_vessel(&mut self, _module: &Module, _vessel: Object) {}
-    fn on_delete_vessel(&mut self, _module: &Module, _vessel: Object) {}
-    fn on_vessel_jump(&mut self, _module: &Module, _vessel: Object) {}
+    fn on_new_vessel(&mut self, _module: &Module, _vessel: Vessel) {}
+    fn on_delete_vessel(&mut self, _module: &Module, _vessel: Vessel) {}
+    fn on_vessel_jump(&mut self, _module: &Module, _vessel: Vessel) {}
     fn on_pause(&mut self, _module: &Module, _pause: bool) {}
     fn on_process_mouse(&mut self, _module: &Module, _event: MouseEvent, _state: KeyboardState, _x: u32, _y: u32) -> bool { false }
     fn on_process_keyboard_immediate(&mut self, _module: &Module, _key_states: KeyStates, _sim_running: bool) -> bool { false }

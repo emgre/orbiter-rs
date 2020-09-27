@@ -14,8 +14,13 @@ impl ModuleCallbacks for TestModule {
         println!("{:?}", Object::find_by_name("Neptune"));
     }
 
-    fn on_focus_changed(&mut self, _module: &Module, new_focus: Object, _old_focus: Option<Object>) {
-        debug_string!("Focus is now on {:?}", new_focus);
+    fn on_pre_step(&mut self, _module: &Module, _simt: f64, _simdt: f64, _mjd: f64) {
+        let earth = Object::find_by_name("Earth").unwrap();
+        debug_string!("Relative pos: {}", Vessel::focus_vessel().unwrap().relative_position(&earth).norm());
+    }
+
+    fn on_focus_changed(&mut self, _module: &Module, new_focus: Vessel, _old_focus: Option<Vessel>) {
+        debug_string!("Focus is now on {}. Size: {}m. Mass: {}kg", new_focus.name(), new_focus.size(), new_focus.mass());
     }
 
     fn on_pause(&mut self, module: &Module, pause: bool) {

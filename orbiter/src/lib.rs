@@ -1,8 +1,9 @@
-use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_int, c_void};
-use winapi::shared::minwindef::DWORD;
+use std::ffi::CString;
+use std::os::raw::{c_char, c_int};
 
 pub mod module;
+mod object;
+mod vessel;
 
 /// Defines the required functions to make your DLL available to Orbiter.
 ///
@@ -60,24 +61,6 @@ macro_rules! init {
 
 lazy_static::lazy_static! {
     static ref BUILD_DATE: CString = CString::new(env!("ORBITER_DATE")).unwrap();
-}
-
-#[link(name = "orbiter_c")]
-extern "C" {
-    fn oapic_dummy();
-
-    // Generic functions
-    fn oapic_oapiGetOrbiterVersion() -> c_int;
-    fn oapic_oapiGetModuleVersion() -> c_int;
-    fn oapic_oapiGetOrbiterInstance() -> HINSTANCE;
-    fn oapic_oapiDebugString() -> *mut c_char;
-
-    // Object manipulation
-    fn oapic_oapiGetObjectByName(name: *const c_char) -> OBJHANDLE;
-    fn oapic_oapiGetObjectByIndex(index: c_int) -> OBJHANDLE;
-    fn oapic_oapiGetObjectCount() -> DWORD;
-    fn oapic_oapiGetObjectType(handle: OBJHANDLE) -> c_int;
-    fn oapic_oapiGetObjectName(handle: OBJHANDLE, name: *mut c_char, n: c_int);
 }
 
 #[doc(hidden)]
@@ -171,97 +154,42 @@ pub fn orbiter_instance() -> HINSTANCE {
     unsafe { oapic_oapiGetOrbiterInstance() }
 }
 
-type OBJHANDLE = *mut c_void;
-
-pub enum Object {
-    /// A star
-    Star(Star),
-    /// A planet
-    ///
-    /// Used for all celestial bodies that are not stars, including moons, comets, etc.
-    Planet(Planet),
-    /// A vessel
-    ///
-    /// A spacecraft, a space station, etc.
-    Vessel(Vessel),
-    /// A surface base
-    ///
-    /// i.e. a spaceport
-    SurfaceBase(SurfaceBase),
+#[link(name = "orbiter_c")]
+extern "C" {
+    fn oapic_dummy();
+    fn oapic_oapiGetOrbiterVersion() -> c_int;
+    fn oapic_oapiGetModuleVersion() -> c_int;
+    fn oapic_oapiGetOrbiterInstance() -> HINSTANCE;
+    fn oapic_oapiDebugString() -> *mut c_char;
 }
 
-impl Object {
-    fn from(handle: OBJHANDLE) -> Option<Self> {
-        match unsafe { oapic_oapiGetObjectType(handle) } {
-            0 => None,
-            1 => panic!("Object type OBJTP_GENERIC not expected"),
-            2 => panic!("Object type OBJTP_CBODY not expected"),
-            3 => Some(Self::Star(Star{handle})),
-            4 => Some(Self::Planet(Planet{handle})),
-            10 => Some(Self::Vessel(Vessel{handle})),
-            20 => Some(Self::SurfaceBase(SurfaceBase{handle})),
-            _ => panic!("Object type {} not expected"),
+pub type Vector3 = nalgebra::Vector3<f64>;
+
+#[repr(C)]
+struct oapic_VECTOR3 {
+    x: f64,
+    y: f64,
+    z: f64,
+}
+
+impl oapic_VECTOR3 {
+    fn new() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
         }
     }
+}
 
-    fn handle(&self) -> OBJHANDLE {
-        match self {
-            Self::Star(star) => star.handle,
-            Self::Planet(planet) => planet.handle,
-            Self::Vessel(vessel) => vessel.handle,
-            Self::SurfaceBase(base) => base.handle,
-        }
-    }
-
-    /// Retrieves all the objects of the current simulation.
-    pub fn all_objects() -> impl Iterator<Item = Object> {
-        let count = unsafe { oapic_oapiGetObjectCount() };
-        let mut objects = Vec::with_capacity(count as usize);
-        for i in 0..count {
-            let object = unsafe { oapic_oapiGetObjectByIndex(i as i32) };
-            objects.push(object);
-        }
-        ObjectIterator(objects.into_iter())
-    }
-
-    /// Retrieves an object by its name.
-    pub fn find_by_name(name: &str) -> Option<Object> {
-        let name = CString::new(name).unwrap();
-        let handle = unsafe { oapic_oapiGetObjectByName(name.as_ptr()) };
-        Object::from(handle)
-    }
-
-    /// Returns the object's name.
-    ///
-    /// The maximum length of the name is 255 characters.
-    pub fn name(&self) -> String {
-        let mut buffer = vec![0; 256];
-        unsafe { oapic_oapiGetObjectName(self.handle(), buffer.as_mut_ptr(), buffer.len() as i32) };
-        unsafe { CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().to_string()
+impl From<oapic_VECTOR3> for Vector3 {
+    fn from(from: oapic_VECTOR3) -> Self {
+        Vector3::new(from.x, from.y, from.z)
     }
 }
 
-impl std::fmt::Debug for Object {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let object_type = match self {
-            Self::Star(_) => "Star",
-            Self::Planet(_) => "Planet",
-            Self::Vessel(_) => "Vessel",
-            Self::SurfaceBase(_) => "SurfaceBase",
-        };
-        f.write_fmt(format_args!("{}({})", object_type, self.name()))
-    }
-}
-
-struct ObjectIterator(std::vec::IntoIter<OBJHANDLE>);
-
-impl Iterator for ObjectIterator {
-    type Item = Object;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|obj| Object::from(obj)).flatten()
-    }
-}
+use crate::object::OBJHANDLE;
+pub use crate::object::{Object, ObjectTrait};
 
 pub struct Star {
     handle: OBJHANDLE,
@@ -271,9 +199,7 @@ pub struct Planet {
     handle: OBJHANDLE,
 }
 
-pub struct Vessel {
-    handle: OBJHANDLE,
-}
+pub use crate::vessel::{Vessel, VesselTrait};
 
 pub struct SurfaceBase {
     handle: OBJHANDLE,

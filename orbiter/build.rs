@@ -41,10 +41,15 @@ fn main() -> Result<(), std::io::Error> {
         error!("{} does not contain Orbitersdk.h", include_path.to_string_lossy());
     }
 
-    // List of C++ files to build
+    // List of C++ files
+    let header_files = [
+        "src/cpp/types.h",
+    ];
     let cpp_files = [
         "src/cpp/main.cpp",
         "src/cpp/module.cpp",
+        "src/cpp/object.cpp",
+        "src/cpp/vessel.cpp",
     ];
 
     // Tell Cargo when to rerun
@@ -54,6 +59,9 @@ fn main() -> Result<(), std::io::Error> {
     println!("cargo:rerun-if-changed={}", lib_path.join("orbiter.lib").to_string_lossy());
     println!("cargo:rerun-if-changed={}", lib_path.join("Orbitersdk.lib").to_string_lossy());
     println!("cargo:rerun-if-changed={}", include_path.join("Orbitersdk.h").to_string_lossy());
+    for file in &header_files {
+        println!("cargo:rerun-if-changed={}", file);
+    }
     for file in &cpp_files {
         println!("cargo:rerun-if-changed={}", file);
     }
@@ -88,7 +96,8 @@ fn main() -> Result<(), std::io::Error> {
     cc
         .cpp(true)
         .files(&cpp_files)
-        .include(include_path);
+        .include(include_path)
+        .include("src/cpp");
 
     if is_static_crt {
         cc
