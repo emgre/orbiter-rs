@@ -13,11 +13,17 @@ impl ModuleCallbacks for TestModule {
 
     fn on_process_mouse(&mut self, _module: &mut Module, event: MouseEvent) -> bool {
         debug_string!("Mouse event: {:?}", event);
-        
+
         false
     }
 
-    fn on_process_keyboard_buffered(&mut self, _module: &mut Module, key: Key, key_states: &KeyStates, _sim_running: bool) -> bool {
+    fn on_process_keyboard_buffered(
+        &mut self,
+        _module: &mut Module,
+        key: Key,
+        key_states: &mut KeyStates,
+        _sim_running: bool,
+    ) -> bool {
         debug_string!("Pressed key: {:?} (ctrl: {})", key, key_states.control());
         false
     }

@@ -1,8 +1,8 @@
+use crate::{oapic_VECTOR3, Vector3};
+use crate::{Planet, Star, SurfaceBase, Vessel};
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int};
 use winapi::shared::minwindef::DWORD;
-use crate::{Planet, Star, SurfaceBase, Vessel};
-use crate::{oapic_VECTOR3, Vector3};
 
 #[doc(hidden)]
 pub enum _OBJHANDLE {}
@@ -19,7 +19,9 @@ pub trait ObjectTrait {
     fn name(&self) -> String {
         let mut buffer = vec![0; 256];
         unsafe { oapic_oapiGetObjectName(self.handle(), buffer.as_mut_ptr(), buffer.len() as i32) };
-        unsafe { CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().to_string()
+        unsafe { CStr::from_ptr(buffer.as_ptr()) }
+            .to_string_lossy()
+            .to_string()
     }
 
     /// Returns the size (mean radius) of the object in meters.
@@ -108,18 +110,18 @@ impl ObjectTrait for Object {
 impl Object {
     fn from(handle: OBJHANDLE) -> Option<Self> {
         if handle.is_null() {
-            return None
+            return None;
         }
 
         match unsafe { oapic_oapiGetObjectType(handle) } {
             0 => None,
             1 => panic!("Object type OBJTP_GENERIC not expected"),
             2 => panic!("Object type OBJTP_CBODY not expected"),
-            3 => Some(Self::Star(Star{handle})),
-            4 => Some(Self::Planet(Planet{handle})),
+            3 => Some(Self::Star(Star { handle })),
+            4 => Some(Self::Planet(Planet { handle })),
             10 => Some(Self::Vessel(Vessel::from_obj(handle).unwrap())),
-            20 => Some(Self::SurfaceBase(SurfaceBase{handle})),
-            _ => panic!("Object type {} not expected"),
+            20 => Some(Self::SurfaceBase(SurfaceBase { handle })),
+            value => panic!("Object type {} not expected", value),
         }
     }
 
@@ -160,7 +162,7 @@ impl Iterator for ObjectIterator {
     type Item = Object;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|obj| Object::from(obj)).flatten()
+        self.0.next().map(Object::from).flatten()
     }
 }
 

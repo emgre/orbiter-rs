@@ -1,5 +1,5 @@
-use crate::OBJHANDLE;
 use crate::ObjectTrait;
+use crate::OBJHANDLE;
 
 #[doc(hidden)]
 pub enum _VESSEL {}
@@ -65,7 +65,7 @@ impl VesselTrait for Vessel {
 impl Vessel {
     pub(crate) fn from_obj(obj: OBJHANDLE) -> Option<Vessel> {
         if obj.is_null() {
-            return None
+            return None;
         }
 
         let handle = unsafe { oapic_oapiGetVesselInterface(obj) };

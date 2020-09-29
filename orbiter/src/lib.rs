@@ -44,20 +44,18 @@ macro_rules! init {
 
         // This is called when the module is loaded by Orbiter
         #[no_mangle]
-        pub unsafe extern "C" fn InitModule(module: orbiter::HINSTANCE)
-        {
+        pub unsafe extern "C" fn InitModule(module: orbiter::HINSTANCE) {
             let mut $module_init_ident = orbiter::InstanceHandle::from(module);
             $body_init
         }
 
         // This is called before the module is unloaded by Orbiter
         #[no_mangle]
-        pub extern "C" fn ExitModule(module: orbiter::HINSTANCE)
-        {
+        pub extern "C" fn ExitModule(module: orbiter::HINSTANCE) {
             let mut $module_exit_ident = orbiter::InstanceHandle::from(module);
             $body_exit
         }
-    }
+    };
 }
 
 lazy_static::lazy_static! {
@@ -68,7 +66,9 @@ lazy_static::lazy_static! {
 pub fn get_module_date() -> *const std::os::raw::c_char {
     // This is to ensure that the `dummy` symbol of OrbiterSDK is kept.
     // It is used to generate the GetModuleVersion symbol
-    unsafe { oapic_dummy(); }
+    unsafe {
+        oapic_dummy();
+    }
     BUILD_DATE.as_ptr()
 }
 
@@ -126,7 +126,13 @@ pub fn _debug_string(mut text: String) {
     text.truncate(255);
     let encoded = std::ffi::CString::new(text).unwrap();
     let bytes = encoded.as_bytes_with_nul();
-    unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), oapic_oapiDebugString() as *mut _, bytes.len()); }
+    unsafe {
+        std::ptr::copy_nonoverlapping(
+            bytes.as_ptr(),
+            oapic_oapiDebugString() as *mut _,
+            bytes.len(),
+        );
+    }
 }
 
 /// Returns the version number of the Orbiter core system.
@@ -201,8 +207,6 @@ pub struct Star {
 pub struct Planet {
     handle: OBJHANDLE,
 }
-
-
 
 pub struct SurfaceBase {
     handle: OBJHANDLE,

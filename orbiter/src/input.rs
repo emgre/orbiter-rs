@@ -1,5 +1,5 @@
-use std::os::raw::c_char;
 use bitflags::bitflags;
+use std::os::raw::c_char;
 use winapi::shared::minwindef::{DWORD, UINT, WPARAM};
 use winapi::um::winuser;
 
@@ -526,7 +526,8 @@ impl MouseEvent {
         Self {
             event_type: MouseEventType::from(event, state),
             flags: get_mouse_flags(state),
-            x, y,
+            x,
+            y,
         }
     }
 }
@@ -578,17 +579,25 @@ impl MouseEventType {
             winuser::WM_MOUSEMOVE => MouseEventType::Move,
             winuser::WM_LBUTTONDOWN => MouseEventType::LeftButton(MouseButtonEventType::Down),
             winuser::WM_LBUTTONUP => MouseEventType::LeftButton(MouseButtonEventType::Up),
-            winuser::WM_LBUTTONDBLCLK => MouseEventType::LeftButton(MouseButtonEventType::DoubleClick),
+            winuser::WM_LBUTTONDBLCLK => {
+                MouseEventType::LeftButton(MouseButtonEventType::DoubleClick)
+            }
             winuser::WM_RBUTTONDOWN => MouseEventType::RightButton(MouseButtonEventType::Down),
             winuser::WM_RBUTTONUP => MouseEventType::RightButton(MouseButtonEventType::Up),
-            winuser::WM_RBUTTONDBLCLK => MouseEventType::RightButton(MouseButtonEventType::DoubleClick),
+            winuser::WM_RBUTTONDBLCLK => {
+                MouseEventType::RightButton(MouseButtonEventType::DoubleClick)
+            }
             winuser::WM_MBUTTONDOWN => MouseEventType::MiddleButton(MouseButtonEventType::Down),
             winuser::WM_MBUTTONUP => MouseEventType::MiddleButton(MouseButtonEventType::Up),
-            winuser::WM_MBUTTONDBLCLK => MouseEventType::MiddleButton(MouseButtonEventType::DoubleClick),
+            winuser::WM_MBUTTONDBLCLK => {
+                MouseEventType::MiddleButton(MouseButtonEventType::DoubleClick)
+            }
             winuser::WM_MOUSEWHEEL => MouseEventType::Wheel(get_wheel_delta(wparam)),
             winuser::WM_XBUTTONDOWN => get_x_button_event(MouseButtonEventType::Down, wparam),
             winuser::WM_XBUTTONUP => get_x_button_event(MouseButtonEventType::Up, wparam),
-            winuser::WM_XBUTTONDBLCLK => get_x_button_event(MouseButtonEventType::DoubleClick, wparam),
+            winuser::WM_XBUTTONDBLCLK => {
+                get_x_button_event(MouseButtonEventType::DoubleClick, wparam)
+            }
             winuser::WM_MOUSEHWHEEL => MouseEventType::HorizontalWheel(get_wheel_delta(wparam)),
             _ => MouseEventType::Unknown(wparam),
         }
