@@ -1,7 +1,8 @@
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
 
-pub mod module;
+mod input;
+mod module;
 mod object;
 mod vessel;
 
@@ -92,7 +93,7 @@ impl InstanceHandle {
     }
 }
 
-/// Display a string in the lower left corner of the viewport.
+/// Displays a string in the lower left corner of the viewport.
 ///
 /// This macro uses the exact same parameters as the [`format!`] macro of the
 /// standard library.
@@ -188,8 +189,10 @@ impl From<oapic_VECTOR3> for Vector3 {
     }
 }
 
-use crate::object::OBJHANDLE;
-pub use crate::object::{Object, ObjectTrait};
+pub use crate::input::*;
+pub use crate::module::*;
+pub use crate::object::*;
+pub use crate::vessel::*;
 
 pub struct Star {
     handle: OBJHANDLE,
@@ -199,7 +202,7 @@ pub struct Planet {
     handle: OBJHANDLE,
 }
 
-pub use crate::vessel::{Vessel, VesselTrait};
+
 
 pub struct SurfaceBase {
     handle: OBJHANDLE,
